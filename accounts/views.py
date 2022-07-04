@@ -1,6 +1,8 @@
 from django.shortcuts import render, HttpResponse, redirect
 from .forms import RegistrationForm
 from accounts.models import Account
+from carts.models import Cart, CartItem
+from carts.views import _cart_id
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 # Create your views here.
@@ -11,6 +13,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
+import requests
 
 
 def register(request):
@@ -56,9 +59,64 @@ def login(request):
         password = request.POST['password']
         user = auth.authenticate(email=email, password=password)
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart=cart)
+                    cart_item_variations = []
+                    cart_item_id = []
+                    for item in cart_item:
+                        existing_variations = list(item.variations.all())
+                        cart_item_id.append(item.id)
+                        cart_item_variations.append(existing_variations)
+                    is_user_item_exists = CartItem.objects.filter(user=user).exists()
+                    if is_user_item_exists:
+                        user_item = CartItem.objects.filter(user=user)
+                    else:
+                        cart_item = CartItem.objects.filter(cart=cart)
+                        for item in cart_item:
+                            item.user = user
+                            item.save()
+                    user_item_variations = []
+                    user_item_id = []
+                    for item in user_item:
+                        existing_variations = list(item.variations.all())
+                        user_item_id.append(item.id)
+                        user_item_variations.append(existing_variations)
+                    for variation in cart_item_variations:
+                        if variation in user_item_variations:
+                            cart_index = cart_item_variations.index(variation)
+                            cart_id = cart_item_id[cart_index]
+                            user_cart_index = user_item_variations.index(variation)
+                            user_cart_id = user_item_id[user_cart_index]
+                            user_cart_object = CartItem.objects.get(id=user_cart_id)
+                            cart_object = CartItem.objects.get(id=cart_id)
+                            user_cart_object.quantity = user_cart_object.quantity + cart_object.quantity
+                            user_cart_object.save()
+                            cart_object.delete()
+                        else:
+                            cart_index = cart_item_variations.index(variation)
+                            cart_id = cart_item_id[cart_index]
+                            cart_object = CartItem.objects.get(id=cart_id)
+                            cart_object.user = user
+                            cart_object.save()
+            except:
+                pass
             auth.login(request, user)
-            messages.success(request, 'You are now logged in.')
-            return redirect('dashboard')
+            url = request.META.get('HTTP_REFERER')
+            try:
+                query = requests.utils.urlparse(url).query
+                print('query -->', query)
+                # next=/cart/checkout
+                params = dict(x.split('=') for x in query.split('&'))
+                if 'next' in params:
+                    next_page = params['next']
+                    return redirect(next_page)
+                return redirect(query.split('=')[1])
+            except:
+                messages.success(request, 'You are now logged in.')
+                return redirect('dashboard')
         else:
             messages.error(request, 'Invalid login credentials')
             return redirect('login')
