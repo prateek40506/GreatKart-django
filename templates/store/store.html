@@ -41,6 +41,8 @@
                             </div> <!-- card-body.// -->
                         </div>
                     </article> <!-- filter-group  .// -->
+                    <form method="POST" action="{% if category_slug %}{% url 'products_by_category' category_slug %}{% else %}{% url 'store' %}{% endif %}">
+                        {% csrf_token %}
                     <article class="filter-group">
                         <header class="card-header">
                             <a href="#" data-toggle="collapse" data-target="#collapse_4" aria-expanded="true" class="">
@@ -51,24 +53,24 @@
                         <div class="filter-content collapse show" id="collapse_4" style="">
                             <div class="card-body">
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
-                                    <span class="btn btn-light"> XS </span>
+                                    <input type="checkbox" name="size" value="small">
+                                    <span class="btn btn-light"> S </span>
                                 </label>
 
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
-                                    <span class="btn btn-light"> SM </span>
+                                    <input type="checkbox" name="size" value="medium">
+                                    <span class="btn btn-light"> M </span>
                                 </label>
 
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
-                                    <span class="btn btn-light"> LG </span>
+                                    <input type="checkbox" name="size" value="large">
+                                    <span class="btn btn-light"> L </span>
                                 </label>
 
-                                <label class="checkbox-btn">
-                                    <input type="checkbox">
-                                    <span class="btn btn-light"> XXL </span>
-                                </label>
+<!--                                <label class="checkbox-btn">-->
+<!--                                    <input type="checkbox">-->
+<!--                                    <span class="btn btn-light"> XXL </span>-->
+<!--                                </label>-->
                             </div><!-- card-body.// -->
                         </div>
                     </article> <!-- filter-group .// -->
@@ -87,7 +89,7 @@
                                     <div class="form-group col-md-6">
                                         <label>Min</label>
                                         <!-- <input class="form-control" placeholder="$0" type="number"> -->
-                                        <select class="mr-2 form-control">
+                                        <select class="mr-2 form-control" name="min_price">
                                             <option value="0">$0</option>
                                             <option value="50">$50</option>
                                             <option value="100">$100</option>
@@ -99,7 +101,7 @@
                                     </div>
                                     <div class="form-group text-right col-md-6">
                                         <label>Max</label>
-                                        <select class="mr-2 form-control">
+                                        <select class="mr-2 form-control" name="max_price">
                                             <option value="50">$50</option>
                                             <option value="100">$100</option>
                                             <option value="150">$150</option>
@@ -110,10 +112,11 @@
                                         </select>
                                     </div>
                                 </div> <!-- form-row.// -->
-                                <button class="btn btn-block btn-primary">Apply</button>
+                                <button class="btn btn-block btn-primary" type="submit">Apply</button>
                             </div><!-- card-body.// -->
                         </div>
                     </article> <!-- filter-group .// -->
+                    </form>
 
                 </div> <!-- card.// -->
 
